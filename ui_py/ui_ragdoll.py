@@ -36,10 +36,10 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addItem(self.horizontalSpacer, 0, 0, 1, 1)
 
-        self.hello_world_btn = QPushButton(self.gridLayoutWidget)
-        self.hello_world_btn.setObjectName(u"hello_world_btn")
+        self.screenshot_btn = QPushButton(self.gridLayoutWidget)
+        self.screenshot_btn.setObjectName(u"screenshot_btn")
 
-        self.gridLayout.addWidget(self.hello_world_btn, 0, 1, 1, 1)
+        self.gridLayout.addWidget(self.screenshot_btn, 0, 1, 1, 1)
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -61,6 +61,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.hello_world_btn.setText(QCoreApplication.translate("MainWindow", u"Hello world", None))
+        self.screenshot_btn.setText(QCoreApplication.translate("MainWindow", u"Task a screenshot", None))
     # retranslateUi
 

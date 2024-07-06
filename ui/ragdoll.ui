@@ -27,7 +27,7 @@
      <item row="0" column="0">
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -38,16 +38,16 @@
       </spacer>
      </item>
      <item row="0" column="1">
-      <widget class="QPushButton" name="hello_world_btn">
+      <widget class="QPushButton" name="screenshot_btn">
        <property name="text">
-        <string>Hello world</string>
+        <string>Task a screenshot</string>
        </property>
       </widget>
      </item>
      <item row="0" column="2">
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
