@@ -5,5 +5,5 @@ if __name__ == '__main__':
     for _, _, filenames in os.walk("./"):
         for filename in filenames:
             if filename.endswith(".ui"):
-                args = ["pyuic6", "-o", f"../ui_py/ui_{filename}.py", filename]
+                args = ["pyside6-uic", filename, "-o", f"../ui_py/ui_{filename.split('.')[0]}.py"]
                 subprocess.call(args)
