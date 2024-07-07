@@ -3,6 +3,8 @@ import win32gui
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtCore import Qt
 
+import logs
+
 
 class ScreenWindow(QtWidgets.QMainWindow):
     _EMPTY_HWND = -1
@@ -41,5 +43,5 @@ class ScreenWindow(QtWidgets.QMainWindow):
     def _restore_foreground_window(self):
         if self.hwnd != self._EMPTY_HWND:
             code = win32gui.ShowWindow(self.hwnd, win32con.SW_RESTORE)
-            print(f"show window {self.hwnd}, code is {code}")
+            logs.info(f"show window {self.hwnd}, code is {code}")
             self.hwnd = self._EMPTY_HWND

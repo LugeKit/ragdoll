@@ -1,5 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 
+import logs
 from ui_py.ui_ragdoll import Ui_MainWindow
 from . import screen_window
 
@@ -24,7 +25,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             screen = self.screen()
 
         if screen is None:
-            print("screen is None")
+            logs.info("screen is None")
 
         original_pixmap = screen.grabWindow(0)
         self.fullscreen_widget.display(original_pixmap)

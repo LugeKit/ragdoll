@@ -6,6 +6,8 @@ import win32con
 import ctypes
 import ctypes.wintypes
 
+import logs
+
 user32 = ctypes.windll.user32
 
 
@@ -40,9 +42,9 @@ class HotkeyManager(threading.Thread):
 
     def register(self, hk: Hotkey):
         if self.is_alive():
-            print("failed to register hotkey, please register hotkey before thread is running")
+            logs.info("failed to register hotkey, please register hotkey before thread is running")
 
-        print(f"register {hk.vk} successfully, id is {self.id}")
+        logs.info(f"register {hk.vk} successfully, id is {self.id}")
         self.hotkeys.append((self.id, hk))
         self.id += 1
 
@@ -59,7 +61,7 @@ class HotkeyManager(threading.Thread):
     def run(self):
         for (hk_id, hk) in self.hotkeys:
             if not user32.RegisterHotKey(None, hk_id, hk.fs_modifiers, hk.vk):
-                print(f"failed to register hotkey: {hk_id}")
+                logs.info(f"failed to register hotkey: {hk_id}")
 
         try:
             msg = ctypes.wintypes.MSG()
