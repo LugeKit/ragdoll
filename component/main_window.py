@@ -25,7 +25,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             screen = self.screen()
 
         if screen is None:
-            logs.info("screen is None")
+            logs.error("screen is None")
 
         original_pixmap = screen.grabWindow(0)
         self.fullscreen_widget.display(original_pixmap)
