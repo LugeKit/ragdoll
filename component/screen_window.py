@@ -19,10 +19,12 @@ class ScreenWindow(QtWidgets.QMainWindow):
         )
 
         layout = QtWidgets.QVBoxLayout()
-        self.image_container = _ImageContainer(self)
-        self.image_container.resize(self.screen().size())
-        layout.addWidget(self.image_container, Qt.AlignmentFlag.AlignCenter)
+        self.clipper = _ImageClipper(self)
+        self.clipper.resize(self.screen().size())
+        layout.addWidget(self.clipper, Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)
+
+        self.clipper.clipped.connect(self._hello)
 
     def close(self):
         self._restore_foreground_window()
@@ -33,8 +35,8 @@ class ScreenWindow(QtWidgets.QMainWindow):
 
     def display(self, img: QtGui.QPixmap | QtGui.QImage):
         self.hwnd = win32gui.GetForegroundWindow()
-        self.image_container.setPixmap(img)
         self.resize(img.size())
+        self.clipper.setPixmap(img)
         self.show()
 
     def _restore_foreground_window(self):
@@ -43,9 +45,14 @@ class ScreenWindow(QtWidgets.QMainWindow):
             logs.info(f"show window {self.hwnd}, code is {code}")
             self.hwnd = self._EMPTY_HWND
 
+    @QtCore.Slot(QtCore.QRect)
+    def _hello(self, rect: QtCore.QRect):
+        logs.info(f"clipped: {rect}")
 
-class _ImageContainer(QtWidgets.QLabel):
-    clipped = QtCore.Signal()
+
+class _ImageClipper(QtWidgets.QLabel):
+    _CLIPPED_THRESHOLD = 1
+    clipped = QtCore.Signal(QtCore.QRect)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -73,7 +80,9 @@ class _ImageContainer(QtWidgets.QLabel):
         self.update()
 
     def mouseReleaseEvent(self, ev):
-        self.clipped.emit()
+        if self.rect.width() * self.rect.height() < self._CLIPPED_THRESHOLD:
+            return
+        self.clipped.emit(self.rect)
 
     def mouseDoubleClickEvent(self, event):
         self.parent().mouseDoubleClickEvent(event)
