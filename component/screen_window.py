@@ -5,7 +5,13 @@ from PySide6.QtCore import Qt
 class ScreenWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.CustomizeWindowHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.BypassWindowManagerHint
+            | Qt.WindowType.WindowStaysOnTopHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         layout = QtWidgets.QVBoxLayout()
 
         self.label = QtWidgets.QLabel(self)
@@ -17,6 +23,7 @@ class ScreenWindow(QtWidgets.QMainWindow):
     def mouseDoubleClickEvent(self, event):
         self.close()
 
-    def show_fullscreen(self, img: QtGui.QPixmap | QtGui.QImage):
+    def display(self, img: QtGui.QPixmap | QtGui.QImage):
         self.label.setPixmap(img)
-        self.showFullScreen()
+        self.resize(img.size())
+        self.show()

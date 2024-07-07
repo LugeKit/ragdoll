@@ -16,7 +16,7 @@ def main():
     m = hotkey.HotkeyManager()
     m.register(
         hotkey.Hotkey(
-            window.show_signal.emit,
+            window.hotkey_signal.emit,
             hotkey.HotkeyFsModifiers.MOD_NONE,
             win32con.VK_F4,
         )

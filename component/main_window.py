@@ -5,7 +5,7 @@ from . import screen_window
 
 
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
-    show_signal = QtCore.Signal()
+    hotkey_signal = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
@@ -13,9 +13,12 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.fullscreen_widget = screen_window.ScreenWindow()
         self.screenshot_btn.clicked.connect(self.screenshot)
-        self.show_signal.connect(self.show_normal)
+        self.hotkey_signal.connect(self.screenshot)
 
     def screenshot(self):
+        if self.fullscreen_widget.isVisible():
+            return
+
         screen = QtGui.QGuiApplication.primaryScreen()
         if self.screen() is not None:
             screen = self.screen()
@@ -24,8 +27,4 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             print("screen is None")
 
         original_pixmap = screen.grabWindow(0)
-        self.fullscreen_widget.show_fullscreen(original_pixmap)
-
-    def show_normal(self):
-        self.activateWindow()
-        self.showNormal()
+        self.fullscreen_widget.display(original_pixmap)
