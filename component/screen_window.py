@@ -91,62 +91,71 @@ class _ImageClipper(QtWidgets.QLabel):
 
         self.state = self.State.EMPTY
 
-        self.rect = QtCore.QRect()
+        self._rect = QtCore.QRect()
         self._overlay_rect = QtCore.QRect()
         self._abs_rect = QtCore.QRect()
 
         self.confirm_sig.connect(self._confirm)
         self.cancel_sig.connect(self._cancel)
 
+    def _cancel(self):
+        logs.debug(f"_cancel is called, current state is {self.state}")
+        self._reset()
+
+    def _confirm(self):
+        logs.debug(f"_confirm is called, current state is {self.state}")
+        if self.state in {self.State.CLIPPING, self.state.CLIPPED}:
+            if self._clip_area() < self._CLIPPED_THRESHOLD:
+                logs.info(f"selected area {self._abs_rect} is too small, please reselect an area")
+                return
+            self._reset()
+            self.clipped_sig.emit(QtCore.QRect(self._abs_rect))
+
+    @override
+    def mousePressEvent(self, ev):
+        self.state = self.state.CLIPPING
+        self._rect.setRect(ev.x(), ev.y(), 0, 0)
+
+    @override
+    def mouseMoveEvent(self, ev):
+        if self.state in {self.State.EMPTY, self.state.CLIPPED}:
+            self.state = self.state.CLIPPING
+            self._rect.setRect(ev.x(), ev.y(), 0, 0)
+            return
+
+        start_x, start_y = self._rect.x(), self._rect.y()
+        self._rect.setRect(start_x, start_y, ev.x() - start_x, ev.y() - start_y)
+        self.update()
+
+    @override
+    def mouseReleaseEvent(self, ev):
+        logs.debug("mouse is released")
+        if self._clip_area() < self._CLIPPED_THRESHOLD:
+            logs.info(f"selected area {self._abs_rect} is too small, reset to zero")
+            self._reset()
+            return
+
+        self.state = self.State.CLIPPED
+
+    def _reset(self):
+        self.state = self.state.EMPTY
+        self._rect.setRect(0, 0, 0, 0)
+        self.update()
+
+    def _clip_area(self) -> int:
+        _convert_rect_to_abs(self._rect, self._abs_rect)
+        return self._abs_rect.width() * self._abs_rect.height()
+
     @override
     def paintEvent(self, event):
         super().paintEvent(event)
-        _convert_rect_to_abs(self.rect, self._abs_rect)
+        _convert_rect_to_abs(self._rect, self._abs_rect)
 
         painter = QtGui.QPainter()
         painter.begin(self)
         self._draw_outside_overlay(painter, self._abs_rect)
         self._draw_rect(painter, self._abs_rect)
         painter.end()
-
-    def _cancel(self):
-        logs.debug(f"_cancel is called, current state is {self.state}")
-        self.state = self.State.EMPTY
-        self.rect.setRect(0, 0, 0, 0)
-        self.update()
-
-    def _confirm(self):
-        logs.debug(f"_confirm is called, current state is {self.state}")
-        if self.state in {self.State.CLIPPING, self.state.CLIPPED}:
-            _convert_rect_to_abs(self.rect, self._abs_rect)
-            if self._abs_rect.width() * self._abs_rect.height() < self._CLIPPED_THRESHOLD:
-                logs.info("selected area is too small, please reselect an area")
-                return
-            self.state = self.State.EMPTY
-            self.rect.setRect(0, 0, 0, 0)
-            self.update()
-            self.clipped_sig.emit(QtCore.QRect(self._abs_rect))
-
-    @override
-    def mousePressEvent(self, ev):
-        self.state = self.state.CLIPPING
-        self.rect.setRect(ev.x(), ev.y(), 0, 0)
-
-    @override
-    def mouseMoveEvent(self, ev):
-        if self.state in {self.State.EMPTY, self.state.CLIPPED}:
-            self.state = self.state.CLIPPING
-            self.rect.setRect(ev.x(), ev.y(), 0, 0)
-            return
-
-        start_x, start_y = self.rect.x(), self.rect.y()
-        self.rect.setRect(start_x, start_y, ev.x() - start_x, ev.y() - start_y)
-        self.update()
-
-    @override
-    def mouseReleaseEvent(self, ev):
-        logs.debug("mouse is released")
-        self.state = self.State.CLIPPED
 
     def _draw_rect(self, painter: QtGui.QPainter, rect: QtCore.QRect):
         painter.setPen(self._BORDER_PEN)

@@ -23,12 +23,12 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
                 )
             )
 
-        self.fullscreen_widget = screen_window.ScreenWindow()
+        self.fullscreen_widget: screen_window.ScreenWindow | None = None
         self.screenshot_btn.clicked.connect(self.screenshot)
         self.activate_sig.connect(self.screenshot)
 
     def screenshot(self):
-        if self.fullscreen_widget.isVisible():
+        if self.fullscreen_widget is not None and self.fullscreen_widget.isVisible():
             return
 
         screen = QtGui.QGuiApplication.primaryScreen()
@@ -37,6 +37,8 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if screen is None:
             logs.error("screen is None")
+            return
 
+        self.fullscreen_widget = screen_window.ScreenWindow()
         original_pixmap = screen.grabWindow(0)
         self.fullscreen_widget.display(original_pixmap)
