@@ -1,4 +1,5 @@
 import enum
+from datetime import datetime
 from typing import LiteralString, AnyStr
 
 from . import util
@@ -15,25 +16,30 @@ class _Log:
     def __init__(self):
         self.log_level = LogLevel.DEBUG
 
+    @staticmethod
+    def _fmt_print(log_level_str: str, caller_info: str, msg: LiteralString | AnyStr):
+        t = datetime.now().strftime("%H:%M:%S")
+        print(f"[{log_level_str}] [{t}] {caller_info}: {msg}")
+
     def debug(self, msg: LiteralString | AnyStr):
         if self.log_level > LogLevel.DEBUG:
             return
-        print(f"[DEBUG] {util.get_caller_info()}: {msg}")
+        self._fmt_print("DEBUG", util.get_caller_info(), msg)
 
     def info(self, msg: LiteralString | AnyStr):
         if self.log_level > LogLevel.INFO:
             return
-        print(f"[INFO] {util.get_caller_info()}: {msg}")
+        self._fmt_print("INFO", util.get_caller_info(), msg)
 
     def warn(self, msg: LiteralString | AnyStr):
         if self.log_level > LogLevel.WARNING:
             return
-        print(f"[WARN] {util.get_caller_info()}: {msg}")
+        self._fmt_print("WARN", util.get_caller_info(), msg)
 
     def error(self, msg: LiteralString | AnyStr):
         if self.log_level > LogLevel.ERROR:
             return
-        print(f"[ERROR] {util.get_caller_info()}: {msg}")
+        self._fmt_print("ERROR", util.get_caller_info(), msg)
 
 
 _log_instance = _Log()
