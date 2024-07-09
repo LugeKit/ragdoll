@@ -1,20 +1,31 @@
+import win32con
 from PySide6 import QtWidgets, QtGui, QtCore
 
+import hotkey
 import logs
 from ui_py.ui_ragdoll import Ui_MainWindow
 from . import screen_window
 
 
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
-    hotkey_signal = QtCore.Signal()
+    activate_sig = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, hk_manager: hotkey.HotkeyManager = None):
         super(Window, self).__init__(parent)
         self.setupUi(self)
 
+        if hk_manager is not None:
+            hk_manager.register(
+                hotkey.Hotkey(
+                    self.activate_sig.emit,
+                    hotkey.HotkeyFsModifiers.MOD_NONE,
+                    win32con.VK_F4,
+                )
+            )
+
         self.fullscreen_widget = screen_window.ScreenWindow()
         self.screenshot_btn.clicked.connect(self.screenshot)
-        self.hotkey_signal.connect(self.screenshot)
+        self.activate_sig.connect(self.screenshot)
 
     def screenshot(self):
         if self.fullscreen_widget.isVisible():
