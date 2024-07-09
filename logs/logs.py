@@ -18,7 +18,7 @@ class _Log:
 
     @staticmethod
     def _fmt_print(log_level_str: str, caller_info: str, msg: LiteralString | AnyStr):
-        t = datetime.now().strftime("%H:%M:%S")
+        t = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         print(f"[{log_level_str}] [{t}] {caller_info}: {msg}")
 
     def debug(self, msg: LiteralString | AnyStr):
