@@ -1,5 +1,3 @@
-from . import logs
-from . import hotkey
-from . import conf
+from . import *
 
-__all__ = ["logs", "hotkey", "conf"]
+__all__ = ["logs", "hotkey", "conf", "fsm"]
