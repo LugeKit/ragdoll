@@ -1,14 +1,15 @@
 import sys
 
-import win32con
 from PySide6 import QtWidgets
-from PySide6 import QtCore
 
 import component
-import hotkey
+from pkg import logs, hotkey
 
 
 def main():
+    logs.init()
+    logs.info("start process")
+
     app = QtWidgets.QApplication(sys.argv)
     m = hotkey.HotkeyManager()
 

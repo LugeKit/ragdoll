@@ -6,8 +6,7 @@ import win32gui
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
-import conf
-from pkg import logs
+from pkg import logs, conf
 
 
 class ScreenWindow(QtWidgets.QMainWindow):
