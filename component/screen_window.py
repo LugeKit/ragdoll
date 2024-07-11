@@ -7,7 +7,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
 import conf
-import logs
+from pkg import logs
 
 
 class ScreenWindow(QtWidgets.QMainWindow):

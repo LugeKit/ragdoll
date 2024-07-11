@@ -6,7 +6,7 @@ import win32con
 import ctypes
 import ctypes.wintypes
 
-import logs
+from pkg import logs
 
 user32 = ctypes.windll.user32
 
