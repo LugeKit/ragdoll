@@ -2,7 +2,7 @@ import win32con
 from PySide6 import QtWidgets, QtGui, QtCore
 
 from pkg import logs, hotkey
-from ui_py.ui_ragdoll import Ui_MainWindow
+from ui_py.ui_mainwindow import Ui_MainWindow
 from . import screen_window
 
 
