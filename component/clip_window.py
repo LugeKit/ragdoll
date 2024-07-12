@@ -7,25 +7,22 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
 from pkg import logs, conf, fsm, ocr
-from ui_py import ui_clip_toolkit
+from ui_py import ui_clip_toolkit, ui_translate_label
 
 
 class ClipWindow(QtWidgets.QMainWindow):
     def __init__(self, img: QtGui.QPixmap | QtGui.QImage):
         super().__init__(None)  # parent should be None to display in fullscreen
-        self.img = img
-        layout = QtWidgets.QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setLayout(layout)
-        self.clipper = self._new_clipper(self.img)
-        self._hwnd = win32gui.GetForegroundWindow()
-
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.CustomizeWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
         )
         self.resize(self.screen().size())
+
+        self.img = img
+        self.clipper = self._new_clipper(self.img)
+        self._hwnd = win32gui.GetForegroundWindow()
 
         confirm_shortcut = QtGui.QShortcut(conf.KEY_CONFIRM_CLIP, self)
         confirm_shortcut.activated.connect(self._confirm)
@@ -34,10 +31,17 @@ class ClipWindow(QtWidgets.QMainWindow):
 
         self.show()
 
+    def _center(self, w: QtWidgets.QWidget):
+        w.setGeometry(
+            int((self.width() - w.width()) / 2),
+            int((self.height() - w.height()) / 2),
+            w.width(),
+            w.height()
+        )
+
     def _new_translated_display_widget(self, text: AnyStr) -> QtWidgets.QWidget:
-        label = QtWidgets.QLabel(self)
-        self.layout().addWidget(label)
-        label.setText(text)
+        label = _TranslateLabel(self, text)
+        self._center(label)
         return label
 
     @override
@@ -75,10 +79,10 @@ class ClipWindow(QtWidgets.QMainWindow):
 
     def _new_clipper(self, img: QtGui.QPixmap | QtGui.QImage):
         clipper = _ImageClipper(self)
-        clipper.resize(self.screen().size())
+        clipper.resize(self.size())
         clipper.setPixmap(img)
         clipper.clipped_sig.connect(self._on_clipped_success)
-        self.layout().addWidget(clipper)
+        clipper.setGeometry(0, 0, self.width(), self.height())
         return clipper
 
     def _scale_rect_by_size(self, rect: QtCore.QRect) -> QtCore.QRect:
@@ -181,7 +185,6 @@ class _ImageClipper(QtWidgets.QLabel):
 
     @override
     def mousePressEvent(self, ev):
-        logs.debug("mouse is pressed")
         self._reset()
         try:
             self._state_machine.trans_to("clipping")
@@ -191,7 +194,6 @@ class _ImageClipper(QtWidgets.QLabel):
 
     @override
     def mouseMoveEvent(self, ev):
-        logs.debug("mouse is moving")
         if self.state() != "clipping":
             try:
                 self._state_machine.trans_to("clipping")
@@ -206,7 +208,6 @@ class _ImageClipper(QtWidgets.QLabel):
 
     @override
     def mouseReleaseEvent(self, ev):
-        logs.debug("mouse is released")
         if self._clip_area() < self._CLIPPED_THRESHOLD:
             logs.info(f"selected area {self._abs_rect} is too small, reset to zero")
             self._reset()
@@ -286,3 +287,31 @@ class _ClipToolkit(QtWidgets.QWidget, ui_clip_toolkit.Ui_Form):
 
         self.cancel_btn.clicked.connect(self.cancel_sig)
         self.confirm_btn.clicked.connect(self.confirm_sig)
+
+
+class _TranslateLabel(QtWidgets.QLabel, ui_translate_label.Ui_Form):
+    def __init__(self, parent=None, text=""):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.label.setText(text)
+        self.label.adjustSize()
+        self.setFixedSize(self.label.width(), self.label.height())
+
+        self._relative = QtCore.QPoint()
+        self.show()
+
+    @override
+    def mouseDoubleClickEvent(self, event):
+        self.close()
+
+    @override
+    def mousePressEvent(self, ev):
+        global_pos = self.mapToGlobal(QtCore.QPoint())
+        logs.debug(f"global_pos is {global_pos}, ev.x: {ev.globalX()}, ev.y: {ev.globalY()}")
+        self._relative.setX(ev.globalX() - global_pos.x())
+        self._relative.setY(ev.globalY() - global_pos.y())
+
+    @override
+    def mouseMoveEvent(self, ev):
+        self.move(ev.globalX() - self._relative.x(), ev.globalY() - self._relative.y())
