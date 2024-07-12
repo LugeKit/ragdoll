@@ -6,7 +6,7 @@ import win32gui
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
-from pkg import logs, conf, fsm
+from pkg import logs, conf, fsm, ocr
 from ui_py import ui_clip_toolkit
 
 
@@ -74,7 +74,8 @@ class ScreenWindow(QtWidgets.QMainWindow):
             return
 
         clipped_pixmap = self.img.copy(self._scale_rect_by_size(rect))
-        clipped_pixmap.save("tmp/tmp.png")
+        if clipped_pixmap.save("tmp/tmp.png"):
+            logs.info(f"ocr result is: {ocr.read_to_text('tmp/tmp.png')}")
         self.close()
 
     def _scale_rect_by_size(self, rect: QtCore.QRect) -> QtCore.QRect:
