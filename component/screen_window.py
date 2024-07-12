@@ -1,5 +1,4 @@
 import enum
-import logging
 from typing import override
 
 import win32con
@@ -12,29 +11,28 @@ from ui_py import ui_clip_toolkit
 
 
 class ScreenWindow(QtWidgets.QMainWindow):
-    _EMPTY_HWND = -1
+    def __init__(self, img: QtGui.QPixmap | QtGui.QImage):
+        super().__init__(None)  # parent should be None to display in fullscreen
+        self.img = img
+        layout = QtWidgets.QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+        self.clipper = self._new_clipper(self.img)
+        self._hwnd = win32gui.GetForegroundWindow()
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.hwnd = self._EMPTY_HWND
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.CustomizeWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
         )
-
-        layout = QtWidgets.QVBoxLayout()
-        self.clipper = _ImageClipper(self)
-        self.clipper.resize(self.screen().size())
-        layout.addWidget(self.clipper, Qt.AlignmentFlag.AlignCenter)
-        self.setLayout(layout)
-
-        self.clipper.clipped_sig.connect(self._hello)
+        self.resize(self.screen().size())
 
         confirm_shortcut = QtGui.QShortcut(conf.KEY_CONFIRM_CLIP, self)
         confirm_shortcut.activated.connect(self._confirm)
         cancel_shortcut = QtGui.QShortcut(conf.KEY_CANCEL_CLIP, self)
         cancel_shortcut.activated.connect(self._cancel)
+
+        self.show()
 
     def _confirm(self):
         self.clipper.confirm_sig.emit()
@@ -48,28 +46,56 @@ class ScreenWindow(QtWidgets.QMainWindow):
 
     def close(self):
         self._restore_foreground_window()
+        self.layout().removeWidget(self.clipper)
+        self.clipper = None
         super().close()
 
     def mouseDoubleClickEvent(self, event):
         self.close()
 
-    def display(self, img: QtGui.QPixmap | QtGui.QImage):
-        self.hwnd = win32gui.GetForegroundWindow()
-        self.resize(img.size())
-        self.clipper.setPixmap(img)
-        self.show()
+    def _new_clipper(self, img: QtGui.QPixmap | QtGui.QImage):
+        clipper = _ImageClipper(self)
+        clipper.resize(self.screen().size())
+        clipper.setPixmap(img)
+        clipper.clipped_sig.connect(self._on_clipped_success)
+        self.layout().addWidget(clipper)
+        return clipper
 
     def _restore_foreground_window(self):
-        if self.hwnd != self._EMPTY_HWND:
-            # FIXME: it will make maximum window to normal
-            code = win32gui.ShowWindow(self.hwnd, win32con.SW_RESTORE)
-            logs.info(f"show window {self.hwnd}, code is {code}")
-            self.hwnd = self._EMPTY_HWND
+        # FIXME: it will make maximum window to normal
+        code = win32gui.ShowWindow(self._hwnd, win32con.SW_RESTORE)
+        logs.info(f"show window {self._hwnd}, code is {code}")
 
     @QtCore.Slot(QtCore.QRect)
-    def _hello(self, rect: QtCore.QRect):
-        logs.info(f"clipped: {rect}")
+    def _on_clipped_success(self, rect: QtCore.QRect):
+        if not self.img:
+            logs.error("self.img is None")
+            self.close()
+            return
+
+        clipped_pixmap = self.img.copy(self._scale_rect_by_size(rect))
+        clipped_pixmap.save("tmp/tmp.png")
         self.close()
+
+    def _scale_rect_by_size(self, rect: QtCore.QRect) -> QtCore.QRect:
+        img_size = self.img.size()
+        clipper_size = self.clipper.size()
+
+        if clipper_size.width() == 0 or clipper_size.height() == 0:
+            raise RuntimeError("clipper size is abnormal")
+
+        x_scale = img_size.width() / clipper_size.width()
+        y_scale = img_size.height() / clipper_size.height()
+
+        logs.debug(f"rect before resize: {rect}")
+        rect.setRect(
+            int(rect.x() * x_scale),
+            int(rect.y() * y_scale),
+            int(rect.width() * x_scale),
+            int(rect.height() * y_scale),
+        )
+        logs.debug(f"rect after resize: {rect}")
+        return rect
 
 
 class _ImageClipper(QtWidgets.QLabel):
