@@ -1,5 +1,5 @@
 import enum
-from typing import override
+from typing import override, AnyStr
 
 import win32con
 import win32gui
@@ -10,7 +10,7 @@ from pkg import logs, conf, fsm, ocr
 from ui_py import ui_clip_toolkit
 
 
-class ScreenWindow(QtWidgets.QMainWindow):
+class ClipWindow(QtWidgets.QMainWindow):
     def __init__(self, img: QtGui.QPixmap | QtGui.QImage):
         super().__init__(None)  # parent should be None to display in fullscreen
         self.img = img
@@ -34,6 +34,24 @@ class ScreenWindow(QtWidgets.QMainWindow):
 
         self.show()
 
+    def _new_translated_display_widget(self, text: AnyStr) -> QtWidgets.QWidget:
+        label = QtWidgets.QLabel(self)
+        self.layout().addWidget(label)
+        label.setText(text)
+        return label
+
+    @override
+    def close(self):
+        self._restore_foreground_window()
+        self.layout().removeWidget(self.clipper)
+        self.clipper = None
+        super().close()
+
+    def _restore_foreground_window(self):
+        # FIXME: it will make maximum window to normal
+        code = win32gui.ShowWindow(self._hwnd, win32con.SW_RESTORE)
+        logs.info(f"show window {self._hwnd}, code is {code}")
+
     def _confirm(self):
         self.clipper.confirm_sig.emit()
 
@@ -44,28 +62,6 @@ class ScreenWindow(QtWidgets.QMainWindow):
 
         self.clipper.cancel_sig.emit()
 
-    def close(self):
-        self._restore_foreground_window()
-        self.layout().removeWidget(self.clipper)
-        self.clipper = None
-        super().close()
-
-    def mouseDoubleClickEvent(self, event):
-        self.close()
-
-    def _new_clipper(self, img: QtGui.QPixmap | QtGui.QImage):
-        clipper = _ImageClipper(self)
-        clipper.resize(self.screen().size())
-        clipper.setPixmap(img)
-        clipper.clipped_sig.connect(self._on_clipped_success)
-        self.layout().addWidget(clipper)
-        return clipper
-
-    def _restore_foreground_window(self):
-        # FIXME: it will make maximum window to normal
-        code = win32gui.ShowWindow(self._hwnd, win32con.SW_RESTORE)
-        logs.info(f"show window {self._hwnd}, code is {code}")
-
     @QtCore.Slot(QtCore.QRect)
     def _on_clipped_success(self, rect: QtCore.QRect):
         if not self.img:
@@ -75,8 +71,15 @@ class ScreenWindow(QtWidgets.QMainWindow):
 
         clipped_pixmap = self.img.copy(self._scale_rect_by_size(rect))
         if clipped_pixmap.save("tmp/tmp.png"):
-            logs.info(f"ocr result is: {ocr.read_to_text('tmp/tmp.png')}")
-        self.close()
+            self._new_translated_display_widget(ocr.read_to_text("tmp/tmp.png"))
+
+    def _new_clipper(self, img: QtGui.QPixmap | QtGui.QImage):
+        clipper = _ImageClipper(self)
+        clipper.resize(self.screen().size())
+        clipper.setPixmap(img)
+        clipper.clipped_sig.connect(self._on_clipped_success)
+        self.layout().addWidget(clipper)
+        return clipper
 
     def _scale_rect_by_size(self, rect: QtCore.QRect) -> QtCore.QRect:
         img_size = self.img.size()

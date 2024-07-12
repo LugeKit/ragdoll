@@ -3,11 +3,11 @@ from PySide6 import QtWidgets, QtGui, QtCore
 
 from pkg import logs, hotkey
 from ui_py.ui_mainwindow import Ui_MainWindow
-from . import screen_window
+from . import clip_window
 
 
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
-    activate_sig = QtCore.Signal()
+    clip_sig = QtCore.Signal()
 
     def __init__(self, parent=None, hk_manager: hotkey.HotkeyManager = None):
         super(Window, self).__init__(parent)
@@ -16,17 +16,17 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         if hk_manager is not None:
             hk_manager.register(
                 hotkey.Hotkey(
-                    self.activate_sig.emit,
+                    self.clip_sig.emit,
                     hotkey.HotkeyFsModifiers.MOD_NONE,
                     win32con.VK_F4,
                 )
             )
 
-        self.fullscreen_widget: screen_window.ScreenWindow | None = None
-        self.screenshot_btn.clicked.connect(self.screenshot)
-        self.activate_sig.connect(self.screenshot)
+        self.fullscreen_widget: clip_window.ClipWindow | None = None
+        self.screenshot_btn.clicked.connect(self.clip)
+        self.clip_sig.connect(self.clip)
 
-    def screenshot(self):
+    def clip(self):
         if self.fullscreen_widget is not None and self.fullscreen_widget.isVisible():
             return
 
@@ -39,4 +39,4 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             return
 
         original_pixmap = screen.grabWindow(0)
-        self.fullscreen_widget = screen_window.ScreenWindow(original_pixmap)
+        self.fullscreen_widget = clip_window.ClipWindow(original_pixmap)
