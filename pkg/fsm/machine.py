@@ -1,7 +1,7 @@
 from typing import LiteralString, AnyStr, Callable
 
 Str = LiteralString | AnyStr
-Callback = Callable[[LiteralString | AnyStr, LiteralString | AnyStr], None]
+Callback = Callable[[Str], None]
 
 
 class Error(RuntimeError):
@@ -59,12 +59,12 @@ class Machine:
         curr_state_name = self._state.name
 
         if self._state.on_exit:
-            self._state.on_exit(curr_state_name, next_state_name)
+            self._state.on_exit(next_state_name)
 
         self._state = next_state
 
         if self._state.on_enter:
-            self._state.on_enter(curr_state_name, next_state_name)
+            self._state.on_enter(curr_state_name)
 
     def state(self):
         return self._state.name

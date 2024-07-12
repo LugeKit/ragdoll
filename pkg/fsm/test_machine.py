@@ -87,16 +87,14 @@ class TestMachine(unittest.TestCase):
     def test_trans_to_callback(self):
         count = 0
 
-        def on_exit_s1(s1, s2):
+        def on_exit_s1(s):
             nonlocal count
             self.assertEqual(0, count)
-            self.assertEqual("state1", s1)
-            self.assertEqual("state2", s2)
+            self.assertEqual("state2", s)
             count += 1
 
-        def on_enter_s2(s1, s2):
-            self.assertEqual("state1", s1)
-            self.assertEqual("state2", s2)
+        def on_enter_s2(s):
+            self.assertEqual("state1", s)
             self.assertEqual(1, count)
 
         states = {

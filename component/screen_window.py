@@ -6,7 +6,7 @@ import win32gui
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
-from pkg import logs, conf
+from pkg import logs, conf, fsm
 
 
 class ScreenWindow(QtWidgets.QMainWindow):
@@ -38,7 +38,7 @@ class ScreenWindow(QtWidgets.QMainWindow):
         self.clipper.confirm_sig.emit()
 
     def _cancel(self):
-        if self.clipper.state == _ImageClipper.State.EMPTY:
+        if self.clipper.state() == _ImageClipper.State.Empty:
             self.close()
             return
 
@@ -81,14 +81,12 @@ class _ImageClipper(QtWidgets.QLabel):
     _BORDER_PEN = QtGui.QPen(Qt.GlobalColor.red, 1)
 
     class State(enum.StrEnum):
-        EMPTY = "EMPTY"
-        CLIPPING = "CLIPPING"
-        CLIPPED = "CLIPPED"
+        Empty = "empty",
+        Clipping = "clipping",
+        Clipped = "clipped"
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        self.state = self.State.EMPTY
 
         self._rect = QtCore.QRect()
         self._overlay_rect = QtCore.QRect()
@@ -97,13 +95,34 @@ class _ImageClipper(QtWidgets.QLabel):
         self.confirm_sig.connect(self._confirm)
         self.cancel_sig.connect(self._cancel)
 
+        self._state_machine = fsm.Machine(
+            {
+                fsm.State(
+                    name=self.State.Empty,
+                    next_states={"clipping"},
+                ),
+                fsm.State(
+                    name=self.State.Clipping,
+                    next_states={"empty", "clipped"},
+                ),
+                fsm.State(
+                    name=self.State.Clipped,
+                    next_states={"empty", "clipping"},
+                ),
+            },
+            "empty"
+        )
+
+    def state(self):
+        return self._state_machine.state()
+
     def _cancel(self):
-        logs.debug(f"_cancel is called, current state is {self.state}")
+        logs.debug(f"_cancel is called, current state is {self.state()}")
         self._reset()
 
     def _confirm(self):
-        logs.debug(f"_confirm is called, current state is {self.state}")
-        if self.state in {self.State.CLIPPING, self.state.CLIPPED}:
+        logs.debug(f"_confirm is called, current state is {self.state()}")
+        if self.state() in {"clipping", "clipped"}:
             if self._clip_area() < self._CLIPPED_THRESHOLD:
                 logs.info(f"selected area {self._abs_rect} is too small, please reselect an area")
                 return
@@ -112,13 +131,13 @@ class _ImageClipper(QtWidgets.QLabel):
 
     @override
     def mousePressEvent(self, ev):
-        self.state = self.state.CLIPPING
+        self._state_machine.trans_to("clipping")
         self._rect.setRect(ev.x(), ev.y(), 0, 0)
 
     @override
     def mouseMoveEvent(self, ev):
-        if self.state in {self.State.EMPTY, self.state.CLIPPED}:
-            self.state = self.state.CLIPPING
+        if self.state() != "clipping":
+            self._state_machine.trans_to("clipping")
             self._rect.setRect(ev.x(), ev.y(), 0, 0)
             return
 
@@ -134,10 +153,10 @@ class _ImageClipper(QtWidgets.QLabel):
             self._reset()
             return
 
-        self.state = self.State.CLIPPED
+        self._state_machine.trans_to("clipped")
 
     def _reset(self):
-        self.state = self.state.EMPTY
+        self._state_machine.trans_to("empty")
         self._rect.setRect(0, 0, 0, 0)
         self.update()
 
