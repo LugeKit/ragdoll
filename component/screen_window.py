@@ -1,4 +1,5 @@
 import enum
+import logging
 from typing import override
 
 import win32con
@@ -7,6 +8,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
 from pkg import logs, conf, fsm
+from ui_py import ui_clip_toolkit
 
 
 class ScreenWindow(QtWidgets.QMainWindow):
@@ -78,7 +80,8 @@ class _ImageClipper(QtWidgets.QLabel):
 
     _OVERLAY_BRUSH = QtGui.QBrush(QtGui.QColor(0, 0, 0, 50))
     _EMPTY_BRUSH = QtGui.QBrush()
-    _BORDER_PEN = QtGui.QPen(Qt.GlobalColor.red, 1)
+    _BORDER_WIDTH = 1
+    _BORDER_PEN = QtGui.QPen(Qt.GlobalColor.red, _BORDER_WIDTH)
 
     class State(enum.StrEnum):
         Empty = "empty",
@@ -87,6 +90,10 @@ class _ImageClipper(QtWidgets.QLabel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._toolkit = _ClipToolkit(self)
+        self._toolkit.hide()
+        self._toolkit.cancel_sig.connect(self.cancel_sig)
+        self._toolkit.confirm_sig.connect(self.confirm_sig)
 
         self._rect = QtCore.QRect()
         self._overlay_rect = QtCore.QRect()
@@ -108,13 +115,26 @@ class _ImageClipper(QtWidgets.QLabel):
                 fsm.State(
                     name=self.State.Clipped,
                     next_states={"empty", "clipping"},
+                    on_enter=self._on_enter_clipped,
+                    on_exit=self._on_exit_clipped,
                 ),
             },
-            "empty"
+            self.State.Empty
         )
 
     def state(self):
         return self._state_machine.state()
+
+    def _on_enter_clipped(self, from_state: fsm.Str):
+        _convert_rect_to_abs(self._rect, self._abs_rect)
+        self._toolkit.setGeometry(self._abs_rect.right() - self._toolkit.width() + self._BORDER_WIDTH,
+                                  self._abs_rect.bottom(),
+                                  self._toolkit.width(),
+                                  self._toolkit.height())
+        self._toolkit.show()
+
+    def _on_exit_clipped(self, to_state: fsm.Str):
+        self._toolkit.hide()
 
     def _cancel(self):
         logs.debug(f"_cancel is called, current state is {self.state()}")
@@ -131,14 +151,23 @@ class _ImageClipper(QtWidgets.QLabel):
 
     @override
     def mousePressEvent(self, ev):
-        self._state_machine.trans_to("clipping")
-        self._rect.setRect(ev.x(), ev.y(), 0, 0)
+        logs.debug("mouse is pressed")
+        self._reset()
+        try:
+            self._state_machine.trans_to("clipping")
+            self._rect.setRect(ev.x(), ev.y(), 0, 0)
+        except (fsm.StateNotFound, fsm.StateTransIllegal) as e:
+            logs.error(e)
 
     @override
     def mouseMoveEvent(self, ev):
+        logs.debug("mouse is moving")
         if self.state() != "clipping":
-            self._state_machine.trans_to("clipping")
-            self._rect.setRect(ev.x(), ev.y(), 0, 0)
+            try:
+                self._state_machine.trans_to("clipping")
+                self._rect.setRect(ev.x(), ev.y(), 0, 0)
+            except (fsm.StateNotFound, fsm.StateTransIllegal) as e:
+                logs.error(e)
             return
 
         start_x, start_y = self._rect.x(), self._rect.y()
@@ -153,12 +182,18 @@ class _ImageClipper(QtWidgets.QLabel):
             self._reset()
             return
 
-        self._state_machine.trans_to("clipped")
+        try:
+            self._state_machine.trans_to("clipped")
+        except (fsm.StateNotFound, fsm.StateTransIllegal) as e:
+            logs.error(e)
 
     def _reset(self):
-        self._state_machine.trans_to("empty")
-        self._rect.setRect(0, 0, 0, 0)
-        self.update()
+        try:
+            self._state_machine.trans_to("empty")
+            self._rect.setRect(0, 0, 0, 0)
+            self.update()
+        except (fsm.StateNotFound, fsm.StateTransIllegal) as e:
+            logs.error(e)
 
     def _clip_area(self) -> int:
         _convert_rect_to_abs(self._rect, self._abs_rect)
@@ -209,3 +244,15 @@ def _convert_rect_to_abs(rect: QtCore.QRect, dest: QtCore.QRect):
         h = -h
         y -= h
     dest.setRect(x, y, w, h)
+
+
+class _ClipToolkit(QtWidgets.QWidget, ui_clip_toolkit.Ui_Form):
+    cancel_sig = QtCore.Signal()
+    confirm_sig = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.cancel_btn.clicked.connect(self.cancel_sig)
+        self.confirm_btn.clicked.connect(self.confirm_sig)

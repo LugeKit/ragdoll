@@ -49,11 +49,14 @@ class Machine:
         self._state = self._states[initial_state]
 
     def trans_to(self, next_state_name: Str):
+        if next_state_name == self._state.name:
+            return
+
         if next_state_name not in self._states:
             raise StateNotFound(f"{next_state_name} is not in current state machine")
 
         if next_state_name not in self._state.next_states:
-            raise StateTransIllegal(f"{next_state_name} can not be trans from {self._state}")
+            raise StateTransIllegal(f"{next_state_name} can not be trans from {self._state.name}")
 
         next_state = self._states[next_state_name]
         curr_state_name = self._state.name
