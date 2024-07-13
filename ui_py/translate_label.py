@@ -37,7 +37,13 @@ class Ui_Form(object):
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(Form)
         self.label.setObjectName(u"label")
+        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy)
         self.label.setMinimumSize(QSize(400, 0))
+        self.label.setMaximumSize(QSize(1000, 16777215))
+        font = QFont()
+        font.setFamilies([u"JetBrains Mono"])
+        self.label.setFont(font)
         self.label.setStyleSheet(u"background: rgb(255, 255, 255);\n"
 "border-radius: 10px;")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)

@@ -296,22 +296,14 @@ class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
         super().__init__(parent)
         self.setupUi(self)
 
-        self._raw_input = text
-        self.on_translated_sig.connect(self.on_translated)
-
-        self.label.setText(text)
-        self.label.adjustSize()
-        self.setFixedSize(self.label.width(), self.label.height())
-
-        effect = QtWidgets.QGraphicsDropShadowEffect(self)
-        effect.setOffset(0, 0)
-        effect.setColor(QtGui.QColor(68, 68, 68))
-        effect.setBlurRadius(10)
-        self.setGraphicsEffect(effect)
-
         self._relative = QtCore.QPoint()
+        self._raw_text = text
+        self.label.setText(self._format(text, "translating..."))
+        self._resize()
+        self.setGraphicsEffect(util.shadow_background_effect(self))
 
-        threading.Thread(target=self.start_translate).start()
+        self.on_translated_sig.connect(self.on_translated)
+        threading.Thread(target=self._start_translate).start()
 
         self.show()
 
@@ -331,12 +323,23 @@ class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
         self.move(ev.globalX() - self._relative.x(), ev.globalY() - self._relative.y())
 
     @QtCore.Slot(str)
-    def on_translated(self, text: str):
-        self.label.setText(f"{self._raw_input}\n--------------\n{text}")
+    def on_translated(self, translated_text: str):
+        self.label.setText(self._format(self._raw_text, translated_text))
+        self._resize()
+
+    def _start_translate(self):
+        translated_text = translator.translate(self._raw_text)
+        logs.debug(f"translated text: {translated_text}")
+        self.on_translated_sig.emit(translated_text)
+
+    def _resize(self):
         self.label.adjustSize()
         self.setFixedSize(self.label.size())
 
-    def start_translate(self):
-        translated_text = translator.translate(self._raw_input)
-        logs.debug(f"translated text: {translated_text}")
-        self.on_translated_sig.emit(translated_text)
+    @staticmethod
+    def _format(raw_text: str, translated_text: str) -> str:
+        return f'''
+        <p><b>{raw_text}</b></p>
+        <p>----------<p>
+        <p><b>{translated_text}</b></p>
+        '''

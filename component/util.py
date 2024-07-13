@@ -1,4 +1,4 @@
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets, QtGui
 
 
 def abs_rect(r: QtCore.QRect, abs_r: QtCore.QRect):
@@ -19,3 +19,11 @@ def center_widget(whole_size: QtCore.QSize, widget: QtWidgets.QWidget):
         widget.width(),
         widget.height()
     )
+
+
+def shadow_background_effect(parent: QtWidgets.QWidget) -> QtWidgets.QGraphicsDropShadowEffect:
+    effect = QtWidgets.QGraphicsDropShadowEffect(parent)
+    effect.setOffset(0, 0)
+    effect.setColor(QtGui.QColor(68, 68, 68))
+    effect.setBlurRadius(10)
+    return effect
