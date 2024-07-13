@@ -1,12 +1,12 @@
 import win32con
+import ui_py
 from PySide6 import QtWidgets, QtGui, QtCore
 
 from pkg import logs, hotkey
-from ui_py.ui_mainwindow import Ui_MainWindow
 from . import clip_window
 
 
-class Window(QtWidgets.QMainWindow, Ui_MainWindow):
+class Window(QtWidgets.QMainWindow, ui_py.mainwindow.Ui_MainWindow):
     clip_sig = QtCore.Signal()
 
     def __init__(self, parent=None, hk_manager: hotkey.HotkeyManager = None):

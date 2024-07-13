@@ -39,7 +39,7 @@ class Ui_Form(object):
         self.label = QLabel(Form)
         self.label.setObjectName(u"label")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-        self.label.setMargin(3)
+        self.label.setMargin(5)
 
         self.horizontalLayout_2.addWidget(self.label)
 

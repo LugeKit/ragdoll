@@ -7,7 +7,8 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
 from pkg import logs, conf, fsm, ocr
-from ui_py import ui_clip_toolkit, ui_translate_label
+
+import ui_py
 
 
 class ClipWindow(QtWidgets.QMainWindow):
@@ -277,7 +278,7 @@ def _convert_rect_to_abs(rect: QtCore.QRect, dest: QtCore.QRect):
     dest.setRect(x, y, w, h)
 
 
-class _ClipToolkit(QtWidgets.QWidget, ui_clip_toolkit.Ui_Form):
+class _ClipToolkit(QtWidgets.QWidget, ui_py.clip_toolkit.Ui_Form):
     cancel_sig = QtCore.Signal()
     confirm_sig = QtCore.Signal()
 
@@ -289,7 +290,7 @@ class _ClipToolkit(QtWidgets.QWidget, ui_clip_toolkit.Ui_Form):
         self.confirm_btn.clicked.connect(self.confirm_sig)
 
 
-class _TranslateLabel(QtWidgets.QLabel, ui_translate_label.Ui_Form):
+class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
     def __init__(self, parent=None, text=""):
         super().__init__(parent)
         self.setupUi(self)
