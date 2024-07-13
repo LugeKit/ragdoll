@@ -1,14 +1,13 @@
 import enum
 from typing import override, AnyStr
 
-import win32con
 import win32gui
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtCore import Qt
 
-from pkg import logs, conf, fsm, ocr
-
 import ui_py
+from component import util
+from pkg import logs, conf, fsm, ocr
 
 
 class ClipWindow(QtWidgets.QMainWindow):
@@ -41,10 +40,13 @@ class ClipWindow(QtWidgets.QMainWindow):
             w.height()
         )
 
-    def _new_translated_display_widget(self, text: AnyStr) -> QtWidgets.QWidget:
+    def _new_translated_display_widget(self, text: AnyStr):
+        if len(text) == 0:
+            logs.warning("text length is zero, is not going to show label")
+            return
+
         label = _TranslateLabel(self, text)
         self._center(label)
-        return label
 
     @override
     def close(self):
@@ -82,8 +84,7 @@ class ClipWindow(QtWidgets.QMainWindow):
             return
 
         clipped_pixmap = self.img.copy(self._scale_rect_by_size(rect))
-        if clipped_pixmap.save("tmp/tmp.png"):
-            self._new_translated_display_widget(ocr.read_to_text("tmp/tmp.png"))
+        self._new_translated_display_widget(ocr.from_qpixmap(clipped_pixmap))
 
     def _new_clipper(self, img: QtGui.QPixmap | QtGui.QImage):
         clipper = _ImageClipper(self)
@@ -168,7 +169,7 @@ class _ImageClipper(QtWidgets.QLabel):
         return self._state_machine.state()
 
     def _on_enter_clipped(self, from_state: fsm.Str):
-        _convert_rect_to_abs(self._rect, self._abs_rect)
+        util.abs_rect(self._rect, self._abs_rect)
         self._toolkit.setGeometry(self._abs_rect.right() - self._toolkit.width() + self._BORDER_WIDTH,
                                   self._abs_rect.bottom(),
                                   self._toolkit.width(),
@@ -235,13 +236,13 @@ class _ImageClipper(QtWidgets.QLabel):
             logs.error(e)
 
     def _clip_area(self) -> int:
-        _convert_rect_to_abs(self._rect, self._abs_rect)
+        util.abs_rect(self._rect, self._abs_rect)
         return self._abs_rect.width() * self._abs_rect.height()
 
     @override
     def paintEvent(self, event):
         super().paintEvent(event)
-        _convert_rect_to_abs(self._rect, self._abs_rect)
+        util.abs_rect(self._rect, self._abs_rect)
 
         painter = QtGui.QPainter()
         painter.begin(self)
@@ -272,17 +273,6 @@ class _ImageClipper(QtWidgets.QLabel):
         painter.drawRect(self._overlay_rect)
 
         painter.setBrush(self._EMPTY_BRUSH)
-
-
-def _convert_rect_to_abs(rect: QtCore.QRect, dest: QtCore.QRect):
-    x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
-    if w < 0:
-        w = -w
-        x -= w
-    if h < 0:
-        h = -h
-        y -= h
-    dest.setRect(x, y, w, h)
 
 
 class _ClipToolkit(QtWidgets.QWidget, ui_py.clip_toolkit.Ui_Form):

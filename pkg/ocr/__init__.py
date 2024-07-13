@@ -1,3 +1,3 @@
-from .ocr import read_to_text
+from .ocr import from_file, from_qpixmap
 
-__all__ = ["read_to_text"]
+__all__ = ["from_file", "from_qpixmap"]
