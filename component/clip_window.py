@@ -298,6 +298,12 @@ class _TranslateLabel(QtWidgets.QLabel, ui_translate_label.Ui_Form):
         self.label.adjustSize()
         self.setFixedSize(self.label.width(), self.label.height())
 
+        effect = QtWidgets.QGraphicsDropShadowEffect(self)
+        effect.setOffset(0, 0)
+        effect.setColor(QtGui.QColor(68, 68, 68))
+        effect.setBlurRadius(10)
+        self.setGraphicsEffect(effect)
+
         self._relative = QtCore.QPoint()
         self.show()
 

@@ -30,14 +30,16 @@ class Ui_Form(object):
         Form.setSizePolicy(sizePolicy)
         Form.setMinimumSize(QSize(0, 24))
         Form.setMaximumSize(QSize(400, 311))
-        Form.setStyleSheet(u"background: rgb(255, 255, 255)")
+        Form.setStyleSheet(u"background: rgb(255, 255, 255);\n"
+"border-radius: 10px;")
         self.horizontalLayout_2 = QHBoxLayout(Form)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 3, 0, 3)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(Form)
         self.label.setObjectName(u"label")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
+        self.label.setMargin(3)
 
         self.horizontalLayout_2.addWidget(self.label)
 
