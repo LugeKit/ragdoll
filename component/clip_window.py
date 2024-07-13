@@ -24,6 +24,7 @@ class ClipWindow(QtWidgets.QMainWindow):
         self.img = img
         self.clipper = self._new_clipper(self.img)
         self._hwnd = win32gui.GetForegroundWindow()
+        self._window_placement = win32gui.GetWindowPlacement(self._hwnd)
 
         confirm_shortcut = QtGui.QShortcut(conf.KEY_CONFIRM_CLIP, self)
         confirm_shortcut.activated.connect(self._confirm)
@@ -53,8 +54,14 @@ class ClipWindow(QtWidgets.QMainWindow):
         super().close()
 
     def _restore_foreground_window(self):
-        # FIXME: it will make maximum window to normal
-        code = win32gui.ShowWindow(self._hwnd, win32con.SW_RESTORE)
+        window_placement = win32gui.GetWindowPlacement(self._hwnd)
+        logs.info(f"before window placement: {self._window_placement}, current window placement: {window_placement}")
+        if self._window_placement[1] == window_placement[1]:
+            # window_placement[1] is ShowCmd, see: https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-windowplacement
+            # no `length` field in python window_placement
+            return
+
+        code = win32gui.ShowWindow(self._hwnd, self._window_placement[1])
         logs.info(f"show window {self._hwnd}, code is {code}")
 
     def _confirm(self):
