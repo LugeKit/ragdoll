@@ -37,6 +37,7 @@ class Ui_Form(object):
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(Form)
         self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(400, 0))
         self.label.setStyleSheet(u"background: rgb(255, 255, 255);\n"
 "border-radius: 10px;")
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)

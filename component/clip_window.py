@@ -1,4 +1,5 @@
 import enum
+import threading
 from typing import override, AnyStr
 
 import win32gui
@@ -7,7 +8,7 @@ from PySide6.QtCore import Qt
 
 import ui_py
 from component import util
-from pkg import logs, conf, fsm, ocr
+from pkg import logs, conf, fsm, ocr, translator
 
 
 class ClipWindow(QtWidgets.QMainWindow):
@@ -289,9 +290,14 @@ class _ClipToolkit(QtWidgets.QWidget, ui_py.clip_toolkit.Ui_Form):
 
 
 class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
+    on_translated_sig = QtCore.Signal(str)
+
     def __init__(self, parent, text):
         super().__init__(parent)
         self.setupUi(self)
+
+        self._raw_input = text
+        self.on_translated_sig.connect(self.on_translated)
 
         self.label.setText(text)
         self.label.adjustSize()
@@ -304,6 +310,9 @@ class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
         self.setGraphicsEffect(effect)
 
         self._relative = QtCore.QPoint()
+
+        threading.Thread(target=self.start_translate).start()
+
         self.show()
 
     @override
@@ -320,3 +329,14 @@ class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
     @override
     def mouseMoveEvent(self, ev):
         self.move(ev.globalX() - self._relative.x(), ev.globalY() - self._relative.y())
+
+    @QtCore.Slot(str)
+    def on_translated(self, text: str):
+        self.label.setText(f"{self._raw_input}\n--------------\n{text}")
+        self.label.adjustSize()
+        self.setFixedSize(self.label.size())
+
+    def start_translate(self):
+        translated_text = translator.translate(self._raw_input)
+        logs.debug(f"translated text: {translated_text}")
+        self.on_translated_sig.emit(translated_text)

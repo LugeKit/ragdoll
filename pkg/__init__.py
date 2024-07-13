@@ -1,3 +1,3 @@
 from . import *
 
-__all__ = ["logs", "hotkey", "conf", "fsm", "ocr"]
+__all__ = ["logs", "hotkey", "conf", "fsm", "ocr", "translator"]
