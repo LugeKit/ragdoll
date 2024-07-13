@@ -25,9 +25,9 @@ class ClipWindow(QtWidgets.QMainWindow):
         self._hwnd = win32gui.GetForegroundWindow()
         self._window_placement = win32gui.GetWindowPlacement(self._hwnd)
 
-        confirm_shortcut = QtGui.QShortcut(conf.KEY_CONFIRM_CLIP, self)
+        confirm_shortcut = QtGui.QShortcut(conf.key.confirm_clip, self)
         confirm_shortcut.activated.connect(self._confirm)
-        cancel_shortcut = QtGui.QShortcut(conf.KEY_CANCEL_CLIP, self)
+        cancel_shortcut = QtGui.QShortcut(conf.key.cancel_clip, self)
         cancel_shortcut.activated.connect(self._cancel)
 
         self.show()
@@ -41,12 +41,13 @@ class ClipWindow(QtWidgets.QMainWindow):
         )
 
     def _new_translated_display_widget(self, text: AnyStr):
+        text = text.strip()
         if len(text) == 0:
             logs.warning("text length is zero, is not going to show label")
             return
 
         label = _TranslateLabel(self, text)
-        self._center(label)
+        util.center_widget(self.size(), label)
 
     @override
     def close(self):
@@ -57,7 +58,7 @@ class ClipWindow(QtWidgets.QMainWindow):
 
     def _restore_foreground_window(self):
         window_placement = win32gui.GetWindowPlacement(self._hwnd)
-        logs.info(f"before window placement: {self._window_placement}, current window placement: {window_placement}")
+        logs.info(f"window hwnd is {self._hwnd}, before window placement: {self._window_placement}, current window placement: {window_placement}")
         if self._window_placement[1] == window_placement[1]:
             # window_placement[1] is ShowCmd, see: https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-windowplacement
             # no `length` field in python window_placement
@@ -288,7 +289,7 @@ class _ClipToolkit(QtWidgets.QWidget, ui_py.clip_toolkit.Ui_Form):
 
 
 class _TranslateLabel(QtWidgets.QLabel, ui_py.translate_label.Ui_Form):
-    def __init__(self, parent=None, text=""):
+    def __init__(self, parent, text):
         super().__init__(parent)
         self.setupUi(self)
 

@@ -7,7 +7,7 @@ from PySide6 import QtGui, QtCore
 
 from pkg import conf
 
-pytesseract.pytesseract.tesseract_cmd = conf.TESSERACT_OCR_EXEC_PATH
+pytesseract.pytesseract.tesseract_cmd = conf.ocr.exec_path
 
 
 def from_file(filepath: AnyStr) -> AnyStr:
@@ -20,5 +20,5 @@ def from_qpixmap(image: QtGui.QPixmap) -> AnyStr:
     image.save(buffer, "PNG")
     return pytesseract.image_to_string(
         Image.open(io.BytesIO(buffer.data().data())),
-        lang='eng'
+        lang=conf.ocr.from_lang
     )

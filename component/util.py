@@ -1,4 +1,4 @@
-from PySide6 import QtCore
+from PySide6 import QtCore, QtWidgets
 
 
 def abs_rect(r: QtCore.QRect, abs_r: QtCore.QRect):
@@ -10,3 +10,12 @@ def abs_rect(r: QtCore.QRect, abs_r: QtCore.QRect):
         h = -h
         y -= h
     abs_r.setRect(x, y, w, h)
+
+
+def center_widget(whole_size: QtCore.QSize, widget: QtWidgets.QWidget):
+    widget.setGeometry(
+        int((whole_size.width() - widget.width()) / 2),
+        int((whole_size.height() - widget.height()) / 2),
+        widget.width(),
+        widget.height()
+    )

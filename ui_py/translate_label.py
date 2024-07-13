@@ -15,7 +15,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QSizePolicy,
+from PySide6.QtWidgets import (QApplication, QGridLayout, QLabel, QSizePolicy,
     QWidget)
 
 class Ui_Form(object):
@@ -28,20 +28,23 @@ class Ui_Form(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Form.sizePolicy().hasHeightForWidth())
         Form.setSizePolicy(sizePolicy)
-        Form.setMinimumSize(QSize(0, 24))
-        Form.setMaximumSize(QSize(400, 311))
-        Form.setStyleSheet(u"background: rgb(255, 255, 255);\n"
-"border-radius: 10px;")
-        self.horizontalLayout_2 = QHBoxLayout(Form)
-        self.horizontalLayout_2.setSpacing(0)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        Form.setMinimumSize(QSize(0, 0))
+        Form.setMaximumSize(QSize(16777215, 16777215))
+        Form.setStyleSheet(u"")
+        self.gridLayout = QGridLayout(Form)
+        self.gridLayout.setSpacing(0)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(Form)
         self.label.setObjectName(u"label")
-        self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
+        self.label.setStyleSheet(u"background: rgb(255, 255, 255);\n"
+"border-radius: 10px;")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label.setWordWrap(True)
         self.label.setMargin(5)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
 
-        self.horizontalLayout_2.addWidget(self.label)
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
 
 
         self.retranslateUi(Form)

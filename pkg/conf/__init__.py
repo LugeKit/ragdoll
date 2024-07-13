@@ -1,2 +1,1 @@
-from .key import *
-from .conf import *
+from . import key, ocr
